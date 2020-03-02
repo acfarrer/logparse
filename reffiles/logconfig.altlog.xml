@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<logging:configuration xmlns:logging="http://www.sas.com/xml/logging/1.0/">
+<!-- Created by Andrew Farrer for use by process_WSlogs.sh and logparse_usage_sysparm.sas -->
+
+   <!-- Rolling log file with default rollover of midnight -->
+   <appender class="RollingFileAppender" name="TimeBasedRollingFile">
+      <param name="Append" value="false"/>
+      <param name="Unique" value="true"/>
+      <param name="ImmediateFlush" value="true"/>      
+      <!-- <param name="AppName" value="logconfig.altlog"/> AppName not supported for RollingFileAppender -->
+      <rollingPolicy class="TimeBasedRollingPolicy">
+         <param name="FileNamePattern" value="/sasdata/bicoc_output01/SASWSlogs/%d_%S{pid}_SASApp01_%S{hostname}.log"/>
+      </rollingPolicy>
+      <layout>
+         <param name="HeaderPattern" value="STARTDT=%d{ISO8601} PID=%S{pid} USER=%S{username} HOST=%S{hostname} APP=%S{App.Name} CMD='%S{startup_cmd}'"/>
+         <param name="ConversionPattern" value="%m"/>
+      </layout>
+   </appender>
+
+   <!-- Unix System Facility Appender, emits events to the Unix system log -->
+   <appender name="UnixSysLog" class="UNXFacilityAppender">
+      <param name="facility" value="syslog"/>
+      <param name="facilitycode" value="log_user"/>
+      <filter class="RepeatMatchFilter">
+      <param name="AcceptOnMatch" value="false"/>
+      </filter>    
+      <layout>
+         <param name="ConversionPattern" value="%-5p [%t] %X{Client.ID}:%u - %m"/>
+      </layout>
+   </appender>
+
+   <!-- Caution: Do NOT edit or change this appender configuration        -->
+   <!-- Workspace Server Appender: Emit log messages to DI Studio Clients -->  
+   <appender name="WSLogAppender" class="sLogAppender">
+      <param name="LogName" value="WSLOG"/>
+      <filter class="StringMatchFilter"> 
+         <param name="StringToMatch" value="STOP"/> 
+         <param name="AcceptOnMatch" value="true"/>
+      </filter>
+      <filter class="DenyAllFilter"/> 
+      <layout>
+       <param name="ConversionPattern"       
+          value=
+"%X{ARM.TranName}|
+_DISARM|
+%12X{ARM.TranState}|
+_DISARM|
+%d{ISO8601ZONE}|
+_DISARM|
+%X{App.Name}|
+_DISARM|
+%X{ARM.GroupName}|
+_DISARM|
+%X{ARM.Metric6.Value}|
+_DISARM|
+%X{ARM.Metric3.Value}|
+_DISARM|
+%X{ARM.TranStop.Mem_Current}|
+_DISARM|
+%X{ARM.TranStop.Thread_Current}|
+_DISARM|
+%X{ARM.TranStop.Thread_High}|
+_DISARM|
+%X{ARM.IO_Count}|
+_DISARM|
+%X{ARM.TranStop.IO_Count}|
+_DISARM|
+%X{ARM.TranResp.Total_CPU_Time}|
+_DISARM|
+%X{ARM.TranResp.Time}|
+_DISARM|
+%X{ARM.TranStart.Time}|
+_DISARM|
+%X{ARM.TranStop.Time}|
+_DISARM|
+%X{ARM.TranResp.User_CPU_Time}|
+_DISARM|
+%X{ARM.Metric7.Value}|
+_ENDDISARM
+"/>         
+      </layout>
+   </appender>
+
+
+   <!-- Caution: Do NOT edit or change this appender configuration        -->
+   <!-- Performance ARM Appender -->   
+   <appender name="ARM" class="ARMAppender">  
+      <param name="GetTimes" value="true"/>
+      <param name="AppName" value="WorkspaceServer"/> 
+      <param name="GroupName" value="SAS"/> 
+      <appender-ref ref="WSLogAppender"/>
+   </appender>
+ 
+   <!-- Caution: Do NOT edit or change this logger configuration          -->
+   <!-- Performance ARM message logger -->   
+   <logger name="Perf.ARM" additivity="false">
+      <level value="Error"/>
+      <appender-ref ref="ARM"/> 
+   </logger> 
+
+   <!-- Immutable loggers -->
+   <logger name="Admin" immutability="true"/>
+   <!-- Application message logger -->
+   <logger name="App" immutability="true">
+      <level value="Info"/>
+   </logger>
+   <logger name="Audit" immutability="true"/>
+   <logger name="IOM" immutability="true"/>
+
+   <!-- Administration message logger -->
+   <logger name="Admin.Operations" additivity="false">
+      <level value="Error"/>
+      <appender-ref ref="UnixSysLog"/>
+   </logger>
+
+   <!-- Logging Facility logger -->
+   <logger name="Logging">
+       <level value="Error"/>
+       <appender-ref ref="UnixSysLog"/>
+   </logger>
+
+   <!-- Root logger -->
+   <root>
+      <level value="error"/>
+      <appender-ref ref="TimeBasedRollingFile"/>      
+   </root>
+
+</logging:configuration>
